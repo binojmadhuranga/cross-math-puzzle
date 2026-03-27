@@ -1,5 +1,6 @@
 package com.example.cross_math_puzzle_compose.ui.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,6 +26,15 @@ fun GameScreen(
     var selectedRow by remember { mutableStateOf(0) }
     var selectedCol by remember { mutableStateOf(0) }
     var input by remember { mutableStateOf("") }
+
+    // Handle system back: close dialog first, otherwise go back to home screen.
+    BackHandler {
+        if (showDialog) {
+            showDialog = false
+        } else {
+            onGoHome()
+        }
+    }
 
     Column(
         modifier = Modifier
