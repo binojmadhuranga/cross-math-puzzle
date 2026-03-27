@@ -5,6 +5,7 @@ data class Cell(
     val col: Int,
     var value: String = "",
     val editable: Boolean = false,
+    val isBlack: Boolean = false,
     var colorState: CellColor = CellColor.DEFAULT
 )
 
