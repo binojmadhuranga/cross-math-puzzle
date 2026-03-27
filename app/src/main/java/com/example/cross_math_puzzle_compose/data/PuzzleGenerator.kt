@@ -6,34 +6,66 @@ object PuzzleGenerator {
 
     fun generatePuzzle(): PuzzleState {
 
-        val size = 11
+        val rows = (11..20).random()
+        val cols = (11..20).random()
 
-        val mutableGrid = MutableList(size) { row ->
-            MutableList(size) { col ->
+        val equationCount = when {
+            rows <= 13 -> 9
+            rows <= 16 -> 11
+            rows <= 18 -> 13
+            else -> 15
+        }
+
+        val mutableGrid = MutableList(rows) { row ->
+            MutableList(cols) { col ->
                 Cell(row, col, isBlack = true)
             }
         }
 
         val equations = mutableListOf<Equation>()
 
-        // -------------------------
-        // 5 HORIZONTAL EQUATIONS
-        // -------------------------
+        var horizontalCount = equationCount / 2
+        var verticalCount = equationCount - horizontalCount
 
-        placeHorizontal(mutableGrid, equations, 0, 0)
-        placeHorizontal(mutableGrid, equations, 2, 0)
-        placeHorizontal(mutableGrid, equations, 4, 0)
-        placeHorizontal(mutableGrid, equations, 6, 0)
-        placeHorizontal(mutableGrid, equations, 8, 0)
+        // =========================
+        // HORIZONTAL EQUATIONS
+        // =========================
 
-        // -------------------------
-        // 4 VERTICAL EQUATIONS
-        // -------------------------
+        repeat(horizontalCount) {
 
-        placeVertical(mutableGrid, equations, 0, 7)
-        placeVertical(mutableGrid, equations, 0, 9)
-        placeVertical(mutableGrid, equations, 4, 5)
-        placeVertical(mutableGrid, equations, 4, 10)
+            var placed = false
+
+            while (!placed) {
+
+                val row = (0 until rows).random()
+                val col = (0 until cols - 5).random()
+
+                if (canPlaceHorizontal(mutableGrid, row, col)) {
+                    placeHorizontal(mutableGrid, equations, row, col)
+                    placed = true
+                }
+            }
+        }
+
+        // =========================
+        // VERTICAL EQUATIONS
+        // =========================
+
+        repeat(verticalCount) {
+
+            var placed = false
+
+            while (!placed) {
+
+                val row = (0 until rows - 5).random()
+                val col = (0 until cols).random()
+
+                if (canPlaceVertical(mutableGrid, row, col)) {
+                    placeVertical(mutableGrid, equations, row, col)
+                    placed = true
+                }
+            }
+        }
 
         return PuzzleState(
             grid = mutableGrid,
@@ -41,9 +73,39 @@ object PuzzleGenerator {
         )
     }
 
-    // ===================================================
-    // HORIZONTAL EQUATION
-    // ===================================================
+    // =========================
+    // CHECK HORIZONTAL SPACE
+    // =========================
+
+    private fun canPlaceHorizontal(
+        grid: MutableList<MutableList<Cell>>,
+        row: Int,
+        startCol: Int
+    ): Boolean {
+        for (i in 0 until 5) {
+            if (!grid[row][startCol + i].isBlack) return false
+        }
+        return true
+    }
+
+    // =========================
+    // CHECK VERTICAL SPACE
+    // =========================
+
+    private fun canPlaceVertical(
+        grid: MutableList<MutableList<Cell>>,
+        startRow: Int,
+        col: Int
+    ): Boolean {
+        for (i in 0 until 5) {
+            if (!grid[startRow + i][col].isBlack) return false
+        }
+        return true
+    }
+
+    // =========================
+    // PLACE HORIZONTAL
+    // =========================
 
     private fun placeHorizontal(
         grid: MutableList<MutableList<Cell>>,
@@ -89,9 +151,9 @@ object PuzzleGenerator {
         )
     }
 
-    // ===================================================
-    // VERTICAL EQUATION
-    // ===================================================
+    // =========================
+    // PLACE VERTICAL
+    // =========================
 
     private fun placeVertical(
         grid: MutableList<MutableList<Cell>>,
@@ -117,23 +179,15 @@ object PuzzleGenerator {
         values[blankIndex] = ""
 
         for (i in values.indices) {
-
             val row = startRow + i
-            val existing = grid[row][col]
 
-            if (
-                existing.isBlack ||
-                existing.value == values[i] ||
-                existing.value == ""
-            ) {
-                grid[row][col] = Cell(
-                    row = row,
-                    col = col,
-                    value = values[i],
-                    editable = i == blankIndex,
-                    isBlack = false
-                )
-            }
+            grid[row][col] = Cell(
+                row = row,
+                col = col,
+                value = values[i],
+                editable = i == blankIndex,
+                isBlack = false
+            )
         }
 
         equations.add(

@@ -21,16 +21,28 @@ fun GameScreen(
 ) {
 
     val state = vm.puzzleState
+    val totalEquations = state.equations.size
+    val isCompleted = totalEquations > 0 && state.score == totalEquations
 
     var showDialog by remember { mutableStateOf(false) }
+    var showCompletionDialog by remember { mutableStateOf(false) }
     var selectedRow by remember { mutableStateOf(0) }
     var selectedCol by remember { mutableStateOf(0) }
     var input by remember { mutableStateOf("") }
+
+    LaunchedEffect(isCompleted) {
+        if (isCompleted) {
+            showDialog = false
+            showCompletionDialog = true
+        }
+    }
 
     // Handle system back: close dialog first, otherwise go back to home screen.
     BackHandler {
         if (showDialog) {
             showDialog = false
+        } else if (showCompletionDialog) {
+            showCompletionDialog = false
         } else {
             onGoHome()
         }
@@ -63,7 +75,7 @@ fun GameScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 Text(
-                    text = "Score: ${state.score} / 9",
+                    text = "Score: ${state.score} / $totalEquations",
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -85,7 +97,7 @@ fun GameScreen(
 
                                 GridCell(cell) {
 
-                                    if (cell.editable) {
+                                    if (cell.editable && !isCompleted) {
                                         selectedRow = rowIndex
                                         selectedCol = colIndex
                                         input = cell.value
@@ -103,15 +115,32 @@ fun GameScreen(
         // GO HOME BUTTON
         // =========================
 
-        Button(
-            onClick = {
-                onGoHome()
-            },
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Go To Home")
+            Button(
+                onClick = {
+                    vm.newGame()
+                    showDialog = false
+                    showCompletionDialog = false
+                    input = ""
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Refresh")
+            }
+
+            Button(
+                onClick = {
+                    onGoHome()
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Go To Home")
+            }
         }
     }
 
@@ -170,6 +199,29 @@ fun GameScreen(
                         Text("Number")
                     }
                 )
+            }
+        )
+    }
+
+    if (showCompletionDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showCompletionDialog = false
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCompletionDialog = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            title = {
+                Text("Puzzle Completed")
+            },
+            text = {
+                Text("Great job! Your score is ${state.score} / $totalEquations")
             }
         )
     }

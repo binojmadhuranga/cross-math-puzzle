@@ -11,6 +11,10 @@ class GameViewModel : ViewModel() {
         private set
 
     fun updateCell(row: Int, col: Int, value: String) {
+        val totalEquations = puzzleState.equations.size
+        if (totalEquations > 0 && puzzleState.score >= totalEquations) {
+            return
+        }
 
         val normalizedValue = value.trim()
 
