@@ -11,19 +11,30 @@ class GameViewModel : ViewModel() {
         private set
 
     fun updateCell(row: Int, col: Int, value: String) {
-        val updatedGrid = puzzleState.grid.map { it.toMutableList() }
+        val normalizedValue = value.trim()
+        val targetCell = puzzleState.grid[row][col]
 
-        updatedGrid[row][col].value = value
+        if (!targetCell.editable) {
+            return
+        }
 
-        if (value == "6") {
-            updatedGrid[row][col].colorState = CellColor.GREEN
-        } else {
-            updatedGrid[row][col].colorState = CellColor.RED
+        val nextColor = if (normalizedValue == "6") CellColor.GREEN else CellColor.RED
+        val updatedCell = targetCell.copy(
+            value = normalizedValue,
+            colorState = nextColor
+        )
+
+        val updatedRow = puzzleState.grid[row].toMutableList().apply {
+            this[col] = updatedCell
+        }
+
+        val updatedGrid = puzzleState.grid.toMutableList().apply {
+            this[row] = updatedRow
         }
 
         puzzleState = puzzleState.copy(
             grid = updatedGrid,
-            score = if (value == "6") puzzleState.score + 1 else puzzleState.score
+            score = if (normalizedValue == "6") 1 else 0
         )
     }
 
