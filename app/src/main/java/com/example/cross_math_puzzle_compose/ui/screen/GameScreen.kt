@@ -14,7 +14,10 @@ import com.example.cross_math_puzzle_compose.ui.component.GridCell
 import com.example.cross_math_puzzle_compose.viewmodel.GameViewModel
 
 @Composable
-fun GameScreen(vm: GameViewModel = viewModel()) {
+fun GameScreen(
+    onGoHome: () -> Unit,
+    vm: GameViewModel = viewModel()
+) {
 
     val state = vm.puzzleState
 
@@ -26,58 +29,79 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
 
         // =========================
-        // SCORE
+        // TOP CONTENT
         // =========================
 
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.End
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Score: ${state.score} / 9",
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            // SCORE
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "Score: ${state.score} / 9",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
 
-        // =========================
-        // GRID WITH HORIZONTAL SCROLL
-        // =========================
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Box(
-            modifier = Modifier
-                .horizontalScroll(rememberScrollState())
-        ) {
-            Column {
+            // GRID
+            Box(
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+            ) {
+                Column {
 
-                state.grid.forEachIndexed { rowIndex, row ->
+                    state.grid.forEachIndexed { rowIndex, row ->
 
-                    Row {
+                        Row {
 
-                        row.forEachIndexed { colIndex, cell ->
+                            row.forEachIndexed { colIndex, cell ->
 
-                            GridCell(cell) {
+                                GridCell(cell) {
 
-                                if (cell.editable) {
-                                    selectedRow = rowIndex
-                                    selectedCol = colIndex
-                                    input = cell.value
-                                    showDialog = true
+                                    if (cell.editable) {
+                                        selectedRow = rowIndex
+                                        selectedCol = colIndex
+                                        input = cell.value
+                                        showDialog = true
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+
+        // =========================
+        // GO HOME BUTTON
+        // =========================
+
+        Button(
+            onClick = {
+                onGoHome()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text("Go To Home")
         }
     }
 
