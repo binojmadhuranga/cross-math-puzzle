@@ -17,29 +17,52 @@ object PuzzleGenerator {
         val mutableGrid = grid.map { it.toMutableList() }
 
         // --------------------------
-        // Horizontal Equation: 3 + _ = 9
-        // answer = 6
+        // RANDOM HORIZONTAL EQUATION
         // --------------------------
 
-        mutableGrid[0][0] = Cell(0,0,"3")
-        mutableGrid[0][1] = Cell(0,1,"+")
-        mutableGrid[0][2] = Cell(0,2,"", editable = true)
-        mutableGrid[0][3] = Cell(0,3,"=")
-        mutableGrid[0][4] = Cell(0,4,"9")
+        val a = (1..9).random()
+        val b = (1..9).random()
+        val result = a + b
+
+        val blankIndex = listOf(0, 2, 4).random()
+
+        val equationValues = mutableListOf(
+            a.toString(),
+            "+",
+            b.toString(),
+            "=",
+            result.toString()
+        )
+
+        val answer = equationValues[blankIndex]
+
+        equationValues[blankIndex] = ""
+
+        for (i in 0..4) {
+            mutableGrid[0][i] = Cell(
+                row = 0,
+                col = i,
+                value = equationValues[i],
+                editable = i == blankIndex
+            )
+        }
 
         // --------------------------
-        // Vertical Equation: _ x 2 = 6
-        // answer = 3
-        // crossing at [0][0]
+        // RANDOM VERTICAL EQUATION
         // --------------------------
 
-        mutableGrid[1][0] = Cell(1,0,"x")
-        mutableGrid[2][0] = Cell(2,0,"2")
-        mutableGrid[3][0] = Cell(3,0,"=")
-        mutableGrid[4][0] = Cell(4,0,"6")
+        val x = (1..5).random()
+        val y = (1..5).random()
+        val verticalResult = x * y
+
+        mutableGrid[0][6] = Cell(0,6,x.toString())
+        mutableGrid[1][6] = Cell(1,6,"x")
+        mutableGrid[2][6] = Cell(2,6,y.toString())
+        mutableGrid[3][6] = Cell(3,6,"=")
+        mutableGrid[4][6] = Cell(4,6,verticalResult.toString())
 
         // --------------------------
-        // Black blocked cells
+        // BLACK CELLS
         // --------------------------
 
         mutableGrid[1][1] = Cell(1,1,isBlack = true)
@@ -52,7 +75,7 @@ object PuzzleGenerator {
         mutableGrid[4][1] = Cell(4,1,isBlack = true)
 
         // --------------------------
-        // Equations list
+        // EQUATIONS
         // --------------------------
 
         val horizontalEquation = Equation(
@@ -63,18 +86,20 @@ object PuzzleGenerator {
                 Pair(0,3),
                 Pair(0,4)
             ),
-            expression = "3+6=9"
+            expression = "$a+$b=$result",
+            answer = answer
         )
 
         val verticalEquation = Equation(
             cells = listOf(
-                Pair(0,0),
-                Pair(1,0),
-                Pair(2,0),
-                Pair(3,0),
-                Pair(4,0)
+                Pair(0,6),
+                Pair(1,6),
+                Pair(2,6),
+                Pair(3,6),
+                Pair(4,6)
             ),
-            expression = "3x2=6"
+            expression = "$x x $y = $verticalResult",
+            answer = ""
         )
 
         return PuzzleState(

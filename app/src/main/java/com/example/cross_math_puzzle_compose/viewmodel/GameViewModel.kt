@@ -11,31 +11,42 @@ class GameViewModel : ViewModel() {
         private set
 
     fun updateCell(row: Int, col: Int, value: String) {
+
         val normalizedValue = value.trim()
-        val targetCell = puzzleState.grid[row][col]
 
-        if (!targetCell.editable) {
-            return
-        }
+        val updatedGrid = puzzleState.grid.map { it.toMutableList() }
 
-        val nextColor = if (normalizedValue == "6") CellColor.GREEN else CellColor.RED
-        val updatedCell = targetCell.copy(
-            value = normalizedValue,
-            colorState = nextColor
+        updatedGrid[row][col] = updatedGrid[row][col].copy(
+            value = normalizedValue
         )
 
-        val updatedRow = puzzleState.grid[row].toMutableList().apply {
-            this[col] = updatedCell
+        val equation = puzzleState.equations.find {
+            it.cells.contains(Pair(row, col))
         }
 
-        val updatedGrid = puzzleState.grid.toMutableList().apply {
-            this[row] = updatedRow
-        }
+        if (equation != null) {
 
-        puzzleState = puzzleState.copy(
-            grid = updatedGrid,
-            score = if (normalizedValue == "6") 1 else 0
-        )
+            val isCorrect = normalizedValue == equation.answer
+
+            val color = if (isCorrect) {
+                CellColor.GREEN
+            } else {
+                CellColor.RED
+            }
+
+            equation.cells.forEach { (r, c) ->
+                updatedGrid[r][c] = updatedGrid[r][c].copy(
+                    colorState = color
+                )
+            }
+
+            val newScore = if (isCorrect) 1 else 0
+
+            puzzleState = puzzleState.copy(
+                grid = updatedGrid,
+                score = newScore
+            )
+        }
     }
 
     fun newGame() {
