@@ -1,8 +1,12 @@
 package com.example.cross_math_puzzle_compose.ui.screen
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -19,37 +23,67 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
     var selectedCol by remember { mutableStateOf(0) }
     var input by remember { mutableStateOf("") }
 
-    Column {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        // =========================
+        // SCORE
+        // =========================
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(12.dp),
             horizontalArrangement = Arrangement.End
         ) {
             Text(
-                text = "Score: ${state.score}"
+                text = "Score: ${state.score} / 9",
+                style = MaterialTheme.typography.titleMedium
             )
         }
 
-        state.grid.forEachIndexed { rowIndex, row ->
+        Spacer(modifier = Modifier.height(8.dp))
 
-            Row {
+        // =========================
+        // GRID WITH HORIZONTAL SCROLL
+        // =========================
 
-                row.forEachIndexed { colIndex, cell ->
+        Box(
+            modifier = Modifier
+                .horizontalScroll(rememberScrollState())
+        ) {
+            Column {
 
-                    GridCell(cell) {
+                state.grid.forEachIndexed { rowIndex, row ->
 
-                        if (cell.editable) {
-                            selectedRow = rowIndex
-                            selectedCol = colIndex
-                            showDialog = true
+                    Row {
+
+                        row.forEachIndexed { colIndex, cell ->
+
+                            GridCell(cell) {
+
+                                if (cell.editable) {
+                                    selectedRow = rowIndex
+                                    selectedCol = colIndex
+                                    input = cell.value
+                                    showDialog = true
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     }
+
+    // =========================
+    // INPUT DIALOG
+    // =========================
 
     if (showDialog) {
         AlertDialog(
@@ -60,11 +94,14 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
             confirmButton = {
                 Button(
                     onClick = {
-                        vm.updateCell(
-                            selectedRow,
-                            selectedCol,
-                            input
-                        )
+                        if (input.isNotBlank()) {
+                            vm.updateCell(
+                                selectedRow,
+                                selectedCol,
+                                input
+                            )
+                        }
+
                         input = ""
                         showDialog = false
                     }
@@ -83,14 +120,20 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
                 }
             },
 
+            title = {
+                Text("Enter Number")
+            },
+
             text = {
                 TextField(
                     value = input,
                     onValueChange = {
-                        input = it
+                        if (it.length <= 2) {
+                            input = it.filter { ch -> ch.isDigit() }
+                        }
                     },
                     label = {
-                        Text("Enter number")
+                        Text("Number")
                     }
                 )
             }

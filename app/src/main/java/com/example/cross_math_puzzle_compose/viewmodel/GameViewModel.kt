@@ -16,36 +16,85 @@ class GameViewModel : ViewModel() {
 
         val updatedGrid = puzzleState.grid.map { it.toMutableList() }
 
+        // =========================
+        // UPDATE CLICKED CELL
+        // =========================
+
         updatedGrid[row][col] = updatedGrid[row][col].copy(
             value = normalizedValue
         )
 
-        val equation = puzzleState.equations.find {
-            it.cells.contains(Pair(row, col))
+        var score = 0
+
+        // =========================
+        // CHECK ALL EQUATIONS
+        // =========================
+
+        puzzleState.equations.forEach { equation ->
+
+            val cells = equation.cells.map { (r, c) ->
+                updatedGrid[r][c]
+            }
+
+            val values = cells.map { it.value }
+
+            if (values.none { it.isBlank() }) {
+
+                val isCorrect = checkEquation(values)
+
+                val color = if (isCorrect) {
+                    CellColor.GREEN
+                } else {
+                    CellColor.RED
+                }
+
+                equation.cells.forEach { (r, c) ->
+                    updatedGrid[r][c] = updatedGrid[r][c].copy(
+                        colorState = color
+                    )
+                }
+
+                if (isCorrect) {
+                    score++
+                }
+
+            } else {
+
+                equation.cells.forEach { (r, c) ->
+                    updatedGrid[r][c] = updatedGrid[r][c].copy(
+                        colorState = CellColor.DEFAULT
+                    )
+                }
+            }
         }
 
-        if (equation != null) {
+        // =========================
+        // UPDATE STATE
+        // =========================
 
-            val isCorrect = normalizedValue == equation.answer
+        puzzleState = puzzleState.copy(
+            grid = updatedGrid,
+            score = score
+        )
+    }
 
-            val color = if (isCorrect) {
-                CellColor.GREEN
-            } else {
-                CellColor.RED
-            }
+    // =========================
+    // EQUATION VALIDATION
+    // =========================
 
-            equation.cells.forEach { (r, c) ->
-                updatedGrid[r][c] = updatedGrid[r][c].copy(
-                    colorState = color
-                )
-            }
+    private fun checkEquation(values: List<String>): Boolean {
 
-            val newScore = if (isCorrect) 1 else 0
+        val a = values[0].toIntOrNull() ?: return false
+        val op = values[1]
+        val b = values[2].toIntOrNull() ?: return false
+        val result = values[4].toIntOrNull() ?: return false
 
-            puzzleState = puzzleState.copy(
-                grid = updatedGrid,
-                score = newScore
-            )
+        return when (op) {
+            "+" -> a + b == result
+            "-" -> a - b == result
+            "x" -> a * b == result
+            "/" -> b != 0 && a / b == result
+            else -> false
         }
     }
 

@@ -8,25 +8,54 @@ object PuzzleGenerator {
 
         val size = 11
 
-        val grid = List(size) { row ->
-            List(size) { col ->
-                Cell(row, col, isBlack = false)
+        val mutableGrid = MutableList(size) { row ->
+            MutableList(size) { col ->
+                Cell(row, col, isBlack = true)
             }
         }
 
-        val mutableGrid = grid.map { it.toMutableList() }
+        val equations = mutableListOf<Equation>()
 
-        // --------------------------
-        // RANDOM HORIZONTAL EQUATION
-        // --------------------------
+        // -------------------------
+        // 5 HORIZONTAL EQUATIONS
+        // -------------------------
 
+        placeHorizontal(mutableGrid, equations, 0, 0)
+        placeHorizontal(mutableGrid, equations, 2, 0)
+        placeHorizontal(mutableGrid, equations, 4, 0)
+        placeHorizontal(mutableGrid, equations, 6, 0)
+        placeHorizontal(mutableGrid, equations, 8, 0)
+
+        // -------------------------
+        // 4 VERTICAL EQUATIONS
+        // -------------------------
+
+        placeVertical(mutableGrid, equations, 0, 7)
+        placeVertical(mutableGrid, equations, 0, 9)
+        placeVertical(mutableGrid, equations, 4, 5)
+        placeVertical(mutableGrid, equations, 4, 10)
+
+        return PuzzleState(
+            grid = mutableGrid,
+            equations = equations
+        )
+    }
+
+    // ===================================================
+    // HORIZONTAL EQUATION
+    // ===================================================
+
+    private fun placeHorizontal(
+        grid: MutableList<MutableList<Cell>>,
+        equations: MutableList<Equation>,
+        row: Int,
+        startCol: Int
+    ) {
         val a = (1..9).random()
         val b = (1..9).random()
         val result = a + b
 
-        val blankIndex = listOf(0, 2, 4).random()
-
-        val equationValues = mutableListOf(
+        val values = mutableListOf(
             a.toString(),
             "+",
             b.toString(),
@@ -34,77 +63,85 @@ object PuzzleGenerator {
             result.toString()
         )
 
-        val answer = equationValues[blankIndex]
+        val blankIndex = listOf(0, 2, 4).random()
+        val answer = values[blankIndex]
 
-        equationValues[blankIndex] = ""
+        values[blankIndex] = ""
 
-        for (i in 0..4) {
-            mutableGrid[0][i] = Cell(
-                row = 0,
-                col = i,
-                value = equationValues[i],
-                editable = i == blankIndex
+        for (i in values.indices) {
+            val col = startCol + i
+
+            grid[row][col] = Cell(
+                row = row,
+                col = col,
+                value = values[i],
+                editable = i == blankIndex,
+                isBlack = false
             )
         }
 
-        // --------------------------
-        // RANDOM VERTICAL EQUATION
-        // --------------------------
+        equations.add(
+            Equation(
+                cells = List(5) { Pair(row, startCol + it) },
+                expression = "$a+$b=$result",
+                answer = answer
+            )
+        )
+    }
 
-        val x = (1..5).random()
-        val y = (1..5).random()
-        val verticalResult = x * y
+    // ===================================================
+    // VERTICAL EQUATION
+    // ===================================================
 
-        mutableGrid[0][6] = Cell(0,6,x.toString())
-        mutableGrid[1][6] = Cell(1,6,"x")
-        mutableGrid[2][6] = Cell(2,6,y.toString())
-        mutableGrid[3][6] = Cell(3,6,"=")
-        mutableGrid[4][6] = Cell(4,6,verticalResult.toString())
+    private fun placeVertical(
+        grid: MutableList<MutableList<Cell>>,
+        equations: MutableList<Equation>,
+        startRow: Int,
+        col: Int
+    ) {
+        val a = (1..5).random()
+        val b = (1..5).random()
+        val result = a * b
 
-        // --------------------------
-        // BLACK CELLS
-        // --------------------------
-
-        mutableGrid[1][1] = Cell(1,1,isBlack = true)
-        mutableGrid[1][2] = Cell(1,2,isBlack = true)
-        mutableGrid[1][3] = Cell(1,3,isBlack = true)
-        mutableGrid[1][4] = Cell(1,4,isBlack = true)
-
-        mutableGrid[2][1] = Cell(2,1,isBlack = true)
-        mutableGrid[3][1] = Cell(3,1,isBlack = true)
-        mutableGrid[4][1] = Cell(4,1,isBlack = true)
-
-        // --------------------------
-        // EQUATIONS
-        // --------------------------
-
-        val horizontalEquation = Equation(
-            cells = listOf(
-                Pair(0,0),
-                Pair(0,1),
-                Pair(0,2),
-                Pair(0,3),
-                Pair(0,4)
-            ),
-            expression = "$a+$b=$result",
-            answer = answer
+        val values = mutableListOf(
+            a.toString(),
+            "x",
+            b.toString(),
+            "=",
+            result.toString()
         )
 
-        val verticalEquation = Equation(
-            cells = listOf(
-                Pair(0,6),
-                Pair(1,6),
-                Pair(2,6),
-                Pair(3,6),
-                Pair(4,6)
-            ),
-            expression = "$x x $y = $verticalResult",
-            answer = ""
-        )
+        val blankIndex = listOf(0, 2, 4).random()
+        val answer = values[blankIndex]
 
-        return PuzzleState(
-            grid = mutableGrid,
-            equations = listOf(horizontalEquation, verticalEquation)
+        values[blankIndex] = ""
+
+        for (i in values.indices) {
+
+            val row = startRow + i
+            val existing = grid[row][col]
+
+            if (
+                existing.isBlack ||
+                existing.value == values[i] ||
+                existing.value == ""
+            ) {
+                grid[row][col] = Cell(
+                    row = row,
+                    col = col,
+                    value = values[i],
+                    editable = i == blankIndex,
+                    isBlack = false
+                )
+            }
+        }
+
+        equations.add(
+            Equation(
+                cells = List(5) { Pair(startRow + it, col) },
+                expression = "$a x $b = $result",
+                answer = answer
+            )
         )
     }
 }
