@@ -1,5 +1,6 @@
 package com.example.cross_math_puzzle_compose.ui.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,69 +15,131 @@ import com.example.cross_math_puzzle_compose.ui.component.GridCell
 import com.example.cross_math_puzzle_compose.viewmodel.GameViewModel
 
 @Composable
-fun GameScreen(vm: GameViewModel = viewModel()) {
+fun GameScreen(
+    onGoHome: () -> Unit,
+    vm: GameViewModel = viewModel()
+) {
 
     val state = vm.puzzleState
+    val totalEquations = state.equations.size
+    val isCompleted = totalEquations > 0 && state.score == totalEquations
 
     var showDialog by remember { mutableStateOf(false) }
+    var showCompletionDialog by remember { mutableStateOf(false) }
     var selectedRow by remember { mutableStateOf(0) }
     var selectedCol by remember { mutableStateOf(0) }
     var input by remember { mutableStateOf("") }
 
+    LaunchedEffect(isCompleted) {
+        if (isCompleted) {
+            showDialog = false
+            showCompletionDialog = true
+        }
+    }
+
+    // Handle system back: close dialog first, otherwise go back to home screen.
+    BackHandler {
+        if (showDialog) {
+            showDialog = false
+        } else if (showCompletionDialog) {
+            showCompletionDialog = false
+        } else {
+            onGoHome()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
 
         // =========================
-        // SCORE
+        // TOP CONTENT
         // =========================
 
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.End
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Score: ${state.score} / 9",
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            // SCORE
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "Score: ${state.score} / $totalEquations",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
 
-        // =========================
-        // GRID WITH HORIZONTAL SCROLL
-        // =========================
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Box(
-            modifier = Modifier
-                .horizontalScroll(rememberScrollState())
-        ) {
-            Column {
+            // GRID
+            Box(
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+            ) {
+                Column {
 
-                state.grid.forEachIndexed { rowIndex, row ->
+                    state.grid.forEachIndexed { rowIndex, row ->
 
-                    Row {
+                        Row {
 
-                        row.forEachIndexed { colIndex, cell ->
+                            row.forEachIndexed { colIndex, cell ->
 
-                            GridCell(cell) {
+                                GridCell(cell) {
 
-                                if (cell.editable) {
-                                    selectedRow = rowIndex
-                                    selectedCol = colIndex
-                                    input = cell.value
-                                    showDialog = true
+                                    if (cell.editable && !isCompleted) {
+                                        selectedRow = rowIndex
+                                        selectedCol = colIndex
+                                        input = cell.value
+                                        showDialog = true
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
+        }
+
+        // =========================
+        // GO HOME BUTTON
+        // =========================
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = {
+                    vm.newGame()
+                    showDialog = false
+                    showCompletionDialog = false
+                    input = ""
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Refresh")
+            }
+
+            Button(
+                onClick = {
+                    onGoHome()
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Go To Home")
             }
         }
     }
@@ -136,6 +199,29 @@ fun GameScreen(vm: GameViewModel = viewModel()) {
                         Text("Number")
                     }
                 )
+            }
+        )
+    }
+
+    if (showCompletionDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showCompletionDialog = false
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCompletionDialog = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            title = {
+                Text("Puzzle Completed")
+            },
+            text = {
+                Text("Great job! Your score is ${state.score} / $totalEquations")
             }
         )
     }

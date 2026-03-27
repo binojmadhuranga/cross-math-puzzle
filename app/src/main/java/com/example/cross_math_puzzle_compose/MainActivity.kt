@@ -23,7 +23,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             CrossmathpuzzlecomposeTheme {
 
-                Surface(modifier = Modifier.fillMaxSize()) {
+                Surface(
+                    modifier = Modifier.fillMaxSize()
+                ) {
 
                     var currentScreen by rememberSaveable {
                         mutableStateOf("home")
@@ -40,9 +42,11 @@ class MainActivity : ComponentActivity() {
                                 onNewGame = {
                                     currentScreen = "game"
                                 },
+
                                 onAdvanced = {
                                     currentScreen = "game"
                                 },
+
                                 onAbout = {
                                     showAboutDialog = true
                                 }
@@ -50,15 +54,24 @@ class MainActivity : ComponentActivity() {
                         }
 
                         "game" -> {
-                            GameScreen()
+                            GameScreen(
+                                onGoHome = {
+                                    currentScreen = "home"
+                                }
+                            )
                         }
                     }
+
+                    // =========================
+                    // ABOUT DIALOG
+                    // =========================
 
                     if (showAboutDialog) {
                         AlertDialog(
                             onDismissRequest = {
                                 showAboutDialog = false
                             },
+
                             confirmButton = {
                                 Button(
                                     onClick = {
@@ -68,9 +81,11 @@ class MainActivity : ComponentActivity() {
                                     Text("OK")
                                 }
                             },
+
                             title = {
                                 Text("About")
                             },
+
                             text = {
                                 Text(
                                     "Name: Your Name\nStudent ID: Your ID"
@@ -89,10 +104,12 @@ class MainActivity : ComponentActivity() {
         onAdvanced: () -> Unit,
         onAbout: () -> Unit
     ) {
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(24.dp),
+
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -104,19 +121,25 @@ class MainActivity : ComponentActivity() {
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            Button(onClick = onNewGame) {
+            Button(
+                onClick = onNewGame
+            ) {
                 Text("New Game")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = onAdvanced) {
+            Button(
+                onClick = onAdvanced
+            ) {
                 Text("Advanced Level")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = onAbout) {
+            Button(
+                onClick = onAbout
+            ) {
                 Text("About")
             }
         }
